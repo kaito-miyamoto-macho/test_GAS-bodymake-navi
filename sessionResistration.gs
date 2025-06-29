@@ -14,7 +14,7 @@ function handleSessionRegistration(sheet, lastRow) {
   const sessionDateIndex = sourceHeaders.indexOf('セッション日時');
   const zoomLinkIndex = sourceHeaders.indexOf('セッション用zoomリンク');
   const coachNoIndex = sourceHeaders.indexOf('コーチ番号');
-  const responderIDNoIndex = sourceHeaders.indexOf('回答者ID');
+  const responderIDNoIndex = sourceHeaders.indexOf(ELME_HIDDEN_COL.ANSWER_ID);
 
   if (clientNoIndex === -1 || sessionDateIndex === -1 || zoomLinkIndex === -1 || coachNoIndex === -1) {
     Logger.log('❌ 必須項目が見つかりません');
@@ -71,12 +71,12 @@ function handleSessionRegistration(sheet, lastRow) {
   }
 
   const calenderTitle = `${clientName}さんセッション`;
-const calenderDetails = `Zoomリンク: ${zoomLink}`;
-const calenderLocation = "Zoom";
-const formatSessionDate = new Date(sessionDate)
-const calenderEndDate = new Date(formatSessionDate.getTime() + 60 * 60 * 1000); // 1時間後
+  const calenderDetails = `Zoomリンク: ${zoomLink}`;
+  const calenderLocation = "Zoom";
+  const formatSessionDate = new Date(sessionDate)
+  const calenderEndDate = new Date(formatSessionDate.getTime() + 60 * 60 * 1000); // 1時間後
 
-const calendarUrl = generateGoogleCalendarUrl(calenderTitle, formatSessionDate, calenderEndDate, calenderDetails, calenderLocation);
+  const calendarUrl = generateGoogleCalendarUrl(calenderTitle, formatSessionDate, calenderEndDate, calenderDetails, calenderLocation);
 
   // **クライアントへのLINE通知**
   const clientMessage = `【セッション登録通知】\n${clientName}さん\n\n以下の日程でセッションが登録されました。
@@ -158,16 +158,16 @@ function findClientByCustomerNo(clientNo, clientSheet) {
   const data = clientSheet.getDataRange().getValues();
   const headers = data[0];
 
-  const customerNoIndex = headers.indexOf('顧客No.');
-  const clientNameIndex = headers.indexOf('名前');
-  const clientLineIdIndex = headers.indexOf('LINE ID');
-  const clientCoachNoIndex = headers.indexOf('担当コーチNo.');
+  const customerNoIndex = headers.indexOf(CLIENT_LIST_TBL.CLIENT_NO);
+  const clientNameIndex = headers.indexOf(CLIENT_LIST_TBL.NAME_KANJI);
+  const clientLineIdIndex = headers.indexOf(CLIENT_LIST_TBL.LINE_ID);
+  const clientCoachNoIndex = headers.indexOf(CLIENT_LIST_TBL.RES_COACH_NO);
 
   // ❗見つからなかったカラムをログ出力
   const missingColumns = [];
-  if (customerNoIndex === -1) missingColumns.push('顧客No.');
-  if (clientNameIndex === -1) missingColumns.push('名前');
-  if (clientLineIdIndex === -1) missingColumns.push('LINE ID');
+  if (customerNoIndex === -1) missingColumns.push(CLIENT_LIST_TBL.CLIENT_NO);
+  if (clientNameIndex === -1) missingColumns.push(CLIENT_LIST_TBL.NAME_KANJI);
+  if (clientLineIdIndex === -1) missingColumns.push(CLIENT_LIST_TBL.LINE_ID);
 
   if (missingColumns.length > 0) {
     Logger.log(`❌ クライアント名簿に必要なカラムが見つかりません: ${missingColumns.join(', ')}`);
@@ -193,9 +193,9 @@ function findClientByCustomerNo(clientNo, clientSheet) {
 function findCoachByNo(coachNo, coachSheet) {
   const data = coachSheet.getDataRange().getValues();
   const headers = data[0];
-  const coachNoIndex = headers.indexOf('コーチNo.');
-  const coachNameIndex = headers.indexOf('お名前（フルネーム）');
-  const coachLineIdIndex = headers.indexOf('LINE ID');
+  const coachNoIndex = headers.indexOf(COACH_LIST_TBL.COACH_NO);
+  const coachNameIndex = headers.indexOf(COACH_LIST_TBL.NAME_KANJI);
+  const coachLineIdIndex = headers.indexOf(COACH_LIST_TBL.LINE_ID);
 
   if (coachNoIndex === -1 || coachNameIndex === -1 || coachLineIdIndex === -1) {
     Logger.log("❌ コーチ名簿に必要なカラムが見つかりません");
@@ -222,8 +222,8 @@ function findCoachByResponderID(responderId, coachSheet) {
   const data = coachSheet.getDataRange().getValues(); // シートの全データを取得
   const headers = data[0]; // ヘッダー行を取得
 
-  const responderIdIndex = headers.indexOf('回答者ID'); // 回答者IDの列
-  const coachNoIndex = headers.indexOf('コーチNo.'); // コーチ番号の列
+  const responderIdIndex = headers.indexOf(COACH_LIST_TBL.ANSWER_ID); // 回答者IDの列
+  const coachNoIndex = headers.indexOf(COACH_LIST_TBL.COACH_NO); // コーチ番号の列
 
   if (responderIdIndex === -1 || coachNoIndex === -1) {
     Logger.log("❌ コーチ名簿に必要なカラムがありません");
@@ -448,6 +448,3 @@ function generateGoogleCalendarUrl(title, startDate, endDate, details, location)
 
   return `${baseUrl}&${params.join('&')}`;
 }
-
-
-
