@@ -65,7 +65,7 @@ function handleLectureOutput(sheet, lastRow, lectureIndex) {
     return;
   }
 
-  const progressSheet = noteSpreadsheet.getSheetByName("ﾎﾞﾃﾞｨﾒｲｸ完全解説　進捗管理");
+  const progressSheet = noteSpreadsheet.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.COURSE_PROGRESS_MANAGEMENT);
   if (!progressSheet) {
     Logger.log("❌ 進捗管理シートが見つかりません");
     return;
