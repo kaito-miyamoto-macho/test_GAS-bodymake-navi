@@ -64,7 +64,7 @@ const WEB_APP_URL = IS_PRODUCTION_FLG ?
 // 本番環境　TODO 本番環境で確認
 '' 
 // テスト環境
-:'https://script.google.com/macros/s/AKfycbyc684rMwoAZ0QUrsZD9jNAPvjHHPewXUtAqGC55swBaEmro_7gd1ukXrL6lArsVe3X_g/exec';
+:'https://script.google.com/macros/s/AKfycbyAZwbNzz7F-MKMxGaPkXFw_2lLIQfzjUGVGa63GZWJx1WWqx3MKtxcDI4exZtALtU19g/exec';
 
 
 const LIFF_APP_URL = IS_PRODUCTION_FLG ?
@@ -96,6 +96,8 @@ const SHEET_NAMES_CLIENTSUPPORT = {
   MONTHLY_BODY_CHANGE: "【月次】身体の変化 ",
   MONTHLY_HABIT_CHECK_LIST: "【月次】習慣化ﾁｪｯｸﾘｽﾄ",
   COURSE_PROGRESS_MANAGEMENT: "ﾎﾞﾃﾞｨﾒｲｸ完全解説　進捗管理",
+  SESSION_ARCHIVE: "ｾｯｼｮﾝｱｰｶｲﾌﾞ",
+  PERSONAL_DATA: "ﾊﾟｰｿﾅﾙﾃﾞｰﾀ"
 }
 
 // デバッグログ管理の各シート名
@@ -110,8 +112,6 @@ const LOG_MANAGEMENT = {
   GOAL_UPDATE : "ゴール更新",
   MOVIE_COURSE_OUTPUT: "動画講座アウトプット",
   ALL_PERIOD_STACKED_REPORT: "【バッチ】全期間積み上げレポート作成",
-  SESSION_ARCHIVE: "ｾｯｼｮﾝｱｰｶｲﾌﾞ",
-  PERSONAL_DATA: "ﾊﾟｰｿﾅﾙﾃﾞｰﾀ"
 }
 
 /**
@@ -244,7 +244,7 @@ const WEEKLY_PILED_UP = {
 }
 // 【集計】全期間積み上げﾚﾎﾟｰﾄ
 const ALL_WEEKLY_PILED_UP = {
-
+  STACKED_REPORT_URL: "積み上げレポートURL"
 }
 // 【月次】身体の変化 
 const MONTHLY_BODY_CHANGE = {
