@@ -559,7 +559,7 @@ function allowClientNoteAccess(clientEmail, coachEmail, file) {
  * フォーム回答内容でパーソナルデータシートを更新する
  *********************/
 function updatePersonalDataToClientNote(archiveSS, sourceHeaders, sourceData) {
-    const personalDataSheet = archiveSS.getSheetByName("ﾊﾟｰｿﾅﾙﾃﾞｰﾀ");
+    const personalDataSheet = archiveSS.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.PERSONAL_DATA);
     if (!personalDataSheet) {
         Logger.log("パーソナルデータシートが見つかりません");
         return;
