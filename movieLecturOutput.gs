@@ -1,99 +1,141 @@
 /**
- * 各クライアントの利用開始日から現在までの利用週数を計算し、
- * 対応する週（WEEK◯）の行にPDFリンクを記録する処理。
- *
- * 処理対象：
- * - クライアントノートのURLが存在し、利用日数が上限未満のもの
- * - クライアントノートに「【集計】全期間積み上げレポート」シートが存在するもの
- *
- * 動作概要：
- * - 利用開始日から利用日数を算出
- * - 利用日数から週数（1週目〜）を算出
- * - 該当するWEEK行にPDFリンクを自動で記録
- *
- * 実行タイミング：
- * - 毎週土曜午前1時にトリガー起動（対象期間：前週の土曜〜金曜）
+ * 各動画講座のアウトプット内容を該当するクライアントノートに転記する
+ * @param sheet: 回答内容が書かれたシート
+ * @param lastRow: 回答内容が記入された最終行
+ * @param lectureIndex: 動画講座識別用インデックス（0〜4）
  */
-function allPeriodStackedReportCreation() {
-  const debugsheet = GET_LOG_SHEET();
+CONST_LECTURE_INDEX = {
+  DM: 0,
+  BM1: 1,
+  BM2: 2,
+  BM3: 3,
+  BM4: 4,
+};
 
-  debugsheet.appendRow([new Date(), "全期間積み上げレポート作成 開始" ]);
+function handleLectureOutput(sheet, lastRow, lectureIndex) {
+  Logger.log("▶ handleLectureOutput START");
+  Logger.log("対象 lectureIndex: " + lectureIndex);
+  Logger.log("対象 sheet name: " + sheet.getName() + ", lastRow: " + lastRow);
 
-  // クライアント名簿取得
-  const clientSheet = GET_CLIENT_SHEET();
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const rowData = sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).getValues()[0];
 
-  if (!clientSheet) {
-    Logger.log("シートが見つかりません");
+  const answerIdIndex = headers.indexOf("回答者ID");
+  if (answerIdIndex === -1) {
+    Logger.log("❌ 回答者ID列が見つかりません");
     return;
   }
 
-  // クライアント名簿のヘッダー
-  const clientSheetHeaders = clientSheet.getRange(1, 1, 1, clientSheet.getLastColumn()).getValues()[0];
-  // クライアント名簿のデータ部分
-  const clientData = clientSheet.getDataRange().getValues();
-  // クライアントノートのURLが入力されてる列
-  const noteIndex = clientSheetHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
-  const useStartDateIndex = clientSheetHeaders.indexOf(CLIENT_LIST_TBL.ENQUETE_ANSWER_DATE);
+  const answerId = rowData[answerIdIndex];
+  Logger.log("✅ 回答者ID取得: " + answerId);
 
-  const today = new Date();
-  today.setDate(today.getDate() - 1); 
-  const ALL_WEEKLY_PILED_UP_HEADER_ROW = 3; // 全期間積み上げレポートのヘッダー
+  const clientSS = SpreadsheetApp.openById(SPREAD_SHEET_IDS.PJTManagement);
+  Logger.log("✅ PJT管理スプレッドシート取得");
 
-  // 全員分実行する
-  for (let i = 0; i < clientData.length; i++) {
-    const dateString = clientData[i][useStartDateIndex].split('/').reverse().join('-');
-    const startDate = new Date(dateString);
-    debugsheet.appendRow([new Date(), `本日日付:${today} と利用開始日付:${startDate} から利用日数を計算`]);
-
-    // 差分をミリ秒単位で計算 → 日数に変換
-    const diffMs = today - startDate;
-    const useDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    debugsheet.appendRow([new Date(), `利用日数: ${useDays}`]);
-
-    const clientNoteURL = clientData[i][noteIndex];
-    // クライアントノートが存在しない、または利用日数が上限を超えているならスキップ
-    if (!clientNoteURL || useDays >= DAYS_AVAILABLE_LONGEST) {
-      debugsheet.appendRow([new Date(), `クライアントノートが存在しない、または利用日数が上限を超えているためスキップ`]);
-      continue;
-    }
-    
-    // クライアントノートのスプレッドシートを開く
-    const clientSS = SpreadsheetApp.openByUrl(clientNoteURL);
-    // 【集計】全期間積み上げﾚﾎﾟｰﾄ
-    const allWeeklyPiledUpSheet = clientSS.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.ALL_WEEKLY_PILED_UP);
-   
-    // 【集計】全期間積み上げﾚﾎﾟｰﾄが存在しないクライアントノートは古いノートのためPDF生成&リンク書き込み処理を行わない
-    if (!allWeeklyPiledUpSheet) {
-      debugsheet.appendRow([new Date(), `クライアントノートが古いためスキップ`]);
-      continue;
-    }
-
-    // PDF表示用リンクを生成
-    const pdfLink = createPDFLink(clientSS.getId(), SHEET_NAMES_CLIENTSUPPORT.WEEKLY_PILED_UP);
-    debugsheet.appendRow([new Date(), `PDF表示用リンクを生成完了: ${pdfLink}`]);
-    
-    // 【集計】全期間積み上げﾚﾎﾟｰﾄのヘッダー
-    const allWeeklyPiledUpHeaders = allWeeklyPiledUpSheet.getRange(ALL_WEEKLY_PILED_UP_HEADER_ROW, 1, 1, allWeeklyPiledUpSheet.getLastColumn()).getValues()[0];
-
-    const useWeek = Math.floor(useDays / 7) + 1;
-
-    // 「積み上げレポートURL」列を特定
-    const urlColIndex = allWeeklyPiledUpHeaders.indexOf(ALL_WEEKLY_PILED_UP.STACKED_REPORT_URL);
-
-    // 書き込み対象の行を算出（WEEK1が4行目に対応）
-    const targetRow = ALL_WEEKLY_PILED_UP_HEADER_ROW + useWeek;
-    debugsheet.appendRow([new Date(), `PDF表示用リンク書き込み対象行: ${targetRow}`]);
-
-    // もし行が26週を超えていたらスキップ(上で利用期間を用いて弾いてはいる)
-    if (useWeek > 26) {
-      debugsheet.appendRow([new Date(), `上限週を超えているためスキップ`]);
-      continue;
-    }
-
-    debugsheet.appendRow([new Date(), `PDF表示用リンク書き込み処理実行`]);
-    allWeeklyPiledUpSheet.getRange(targetRow, urlColIndex + 1).setValue(pdfLink);
-  
+  const clientSheet = clientSS.getSheetByName(SHEET_NAMES_MANAGEMENT.CLIENT_LIST);
+  if (!clientSheet) {
+    Logger.log("❌ クライアント名簿シートが見つかりません");
+    return;
   }
 
-  debugsheet.appendRow([new Date(), "全期間積み上げレポート作成 終了" ]);
+  const clientData = clientSheet.getDataRange().getValues();
+  const clientHeaders = clientData[0];
+  const clientIdIndex = clientHeaders.indexOf("回答者ID");
+  const noteUrlIndex = clientHeaders.indexOf("クライアントノート");
+
+  if (clientIdIndex === -1 || noteUrlIndex === -1) {
+    Logger.log("❌ クライアント名簿内の必要列が見つかりません");
+    return;
+  }
+
+  const clientRow = clientData.find(row => row[clientIdIndex] === answerId);
+  if (!clientRow) {
+    Logger.log("❌ 回答者IDに一致するクライアントが見つかりません");
+    return;
+  }
+
+  const noteUrl = clientRow[noteUrlIndex];
+  Logger.log("✅ クライアントノートURL取得: " + noteUrl);
+
+  let noteSpreadsheet;
+  try {
+    noteSpreadsheet = SpreadsheetApp.openByUrl(noteUrl);
+  } catch (e) {
+    Logger.log("❌ クライアントノートのスプレッドシート取得に失敗: " + e);
+    return;
+  }
+
+  const progressSheet = noteSpreadsheet.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.COURSE_PROGRESS_MANAGEMENT);
+  if (!progressSheet) {
+    Logger.log("❌ 進捗管理シートが見つかりません");
+    return;
+  }
+
+  const progressHeaders = progressSheet.getRange(2, 1, 1, progressSheet.getLastColumn()).getValues()[0];
+  const progressData = progressSheet.getDataRange().getValues();
+  Logger.log("✅ 進捗管理シート読み込み完了");
+
+  const lectureKeywords = [
+    "【全章まとめ　アウトプットフォーム】",
+    "【第1章まとめ　アウトプットフォーム】",
+    "【第2章まとめ　アウトプットフォーム】",
+    "【第3章まとめ　アウトプットフォーム】",
+    "【第4章まとめ　アウトプットフォーム】",
+  ];
+
+  const targetKeyword = lectureKeywords[lectureIndex];
+  if (!targetKeyword) {
+    Logger.log("❌ 指定された講座インデックスに対応するキーワードが存在しません");
+    return;
+  }
+
+  Logger.log("🔍 転記対象キーワード: " + targetKeyword);
+
+  let targetRowIndex = -1;
+  for (let i = 2; i < progressData.length; i++) {
+    if (progressData[i].some(cell => typeof cell === 'string' && cell.includes(targetKeyword))) {
+      targetRowIndex = i + 1;
+      Logger.log("✅ 対象行見つかりました: row " + targetRowIndex);
+      break;
+    }
+  }
+
+  if (targetRowIndex === -1) {
+    Logger.log("❌ 対象行が見つかりません（部分一致: " + targetKeyword + "）");
+    return;
+  }
+
+  const transferItems = {
+    "動画を視聴する目的": null,
+    "学びになったこと上位3つ": null,
+    "「学びになった！」と思った理由": null,
+    "気づいたことや実感したこと": null,
+    "最初の一歩としていつまでに何をするか？（具体的なアクションは何か？）": null
+  };
+
+  Logger.log("🔁 転記項目マッピング開始");
+
+  for (const key in transferItems) {
+    const sourceIndex = headers.indexOf(key);
+    const destIndex = progressHeaders.indexOf(key);
+    Logger.log(`🔍 ${key} | sourceIndex: ${sourceIndex}, destIndex: ${destIndex}`);
+
+    if (sourceIndex !== -1 && destIndex !== -1) {
+      transferItems[key] = { sourceIndex, destIndex };
+    } else {
+      Logger.log(`⚠️ 項目「${key}」が見つからない（source or destination）`);
+    }
+  }
+
+  Logger.log("✅ データ転記開始");
+  for (const key in transferItems) {
+    const indexes = transferItems[key];
+    if (indexes) {
+      const value = rowData[indexes.sourceIndex];
+      Logger.log(`📝 転記: ${key} → row: ${targetRowIndex}, col: ${indexes.destIndex + 1}, value: ${value}`);
+      progressSheet.getRange(targetRowIndex, indexes.destIndex + 1).setValue(value);
+    }
+  }
+
+  Logger.log("🎉 handleLectureOutput 完了");
 }
