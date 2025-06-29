@@ -189,9 +189,9 @@ function transferMappedDataToAnotherSpreadsheet(sourceSheet, lastRow) {
 
   // 【日次】記録シートと【日次】積み上げ日記シートのヘッダー
   const DAILY_OUTPUT_HEADER_ROW = 12;
-  const dailyOutputHeaders = dailyOutputSheet.getRange(DAILY_OUTPUT_HEADER_ROW, 1, 1, dailyOutputSheet.getLastColumn()).getValues()[0];
+  const dailyOutputHeaders = GET_HEADER(dailyOutputSheet, DAILY_OUTPUT_HEADER_ROW);
   const DAILY_PILED_UP_HEADER_ROW = 2;
-  const dailyPiledUpHeaders = dailyPiledUpSheet.getRange(DAILY_PILED_UP_HEADER_ROW, 1, 1, dailyPiledUpSheet.getLastColumn()).getValues()[0];
+  const dailyPiledUpHeaders = GET_HEADER(dailyPiledUpSheet, DAILY_PILED_UP_HEADER_ROW);
 
   // データ列を取得 【日次】記録シート
   const bodyWeghtColIndex = dailyOutputHeaders.indexOf(DAILY_OUTPUT.BODY_WEGHT);
@@ -512,7 +512,7 @@ function allowClientNoteAccess(clientEmail, coachEmail, file) {
  * フォーム回答内容をパーソナルデータシートに転記する
  *********************/
 function insertPersonalDataToClientNote(clientNoteSpreadsheet, sourceHeaders, sourceData) {
-    const personalDataSheet = clientNoteSpreadsheet.getSheetByName("ﾊﾟｰｿﾅﾙﾃﾞｰﾀ");
+    const personalDataSheet = clientNoteSpreadsheet.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.PERSONAL_DATA);
     if (!personalDataSheet) {
         Logger.log("パーソナルデータシートが見つかりません");
         return;
