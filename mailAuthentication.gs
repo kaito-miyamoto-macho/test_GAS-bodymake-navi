@@ -160,7 +160,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
           targetData = authAllData[j];
           if (targetData[authMailColIndex] === inputEmail 
               && targetData[authTypeColIndex] === AUTH_TYPE.REGIST
-              && targetData[authDeleteFlgColIndex] === DELETE_FLG.ON) {
+              && targetData[authDeleteFlgColIndex] !== DELETE_FLG.ON) {
                 targetRow = j + 2; //authAllDataがヘッダーの1行目がないためとindexが0からに合わせて+2
                 Logger.log(`送信されたメールアドレスが既に認証TBL ${targetRow}行目に存在`);
                 authAnswerId = targetData[authAnswerIdColIndex];
@@ -286,7 +286,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
           targetData = authAllData[j];
           if (targetData[authMailColIndex] === inputEmail 
               && targetData[authTypeColIndex] === AUTH_TYPE.REGIST
-              && targetData[authDeleteFlgColIndex] === DELETE_FLG.ON) {
+              && targetData[authDeleteFlgColIndex] !== DELETE_FLG.ON) {
                 targetRow = j + 2; //authAllDataがヘッダーの1行目がないためとindexが0からに合わせて+2
                 Logger.log(`送信されたメールアドレスが既に認証TBL ${targetRow}行目に存在`);
                 authAnswerId = targetData[authAnswerIdColIndex];
