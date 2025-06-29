@@ -30,8 +30,8 @@ function transferSessionBeforeData() {
     // 「顧客名簿」から回答者IDに対応するクライアントノートのURLを取得
     const customerData = customerSheet.getDataRange().getValues();
     const customerHeaders = customerData[0]; // 顧客名簿のヘッダー（1行目）
-    const customerIndex = customerHeaders.indexOf("回答者ID");
-    const noteIndex = customerHeaders.indexOf("クライアントノート");
+    const customerIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.ANSWER_ID);
+    const noteIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
 
     if (customerIndex === -1 || noteIndex === -1) {
         Logger.log("顧客名簿に必要な列がありません");
@@ -53,7 +53,7 @@ function transferSessionBeforeData() {
 
     // クライアントノートのスプレッドシートを開く
     const archiveSS = SpreadsheetApp.openByUrl(clientNoteURL);
-    const archiveSheet = archiveSS.getSheetByName("ｾｯｼｮﾝｱｰｶｲﾌﾞ");
+    const archiveSheet = archiveSS.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.SESSION_ARCHIVE);
 
     if (!archiveSheet) {
         Logger.log("ｾｯｼｮﾝｱｰｶｲﾌﾞシートが見つかりません");
@@ -137,10 +137,10 @@ function sendCoachNotificationSessionBefore(responderId, sessionDate) {
   const customerData = customerSheet.getDataRange().getValues();
   const customerHeaders = customerData[0];
 
-  const customerIdIndex = customerHeaders.indexOf("回答者ID");
-  const coachNoIndex = customerHeaders.indexOf("担当コーチNo.");
-  const clientNameIndex = customerHeaders.indexOf("名前");
-  const clientNoteIndex = customerHeaders.indexOf("クライアントノート");
+  const customerIdIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.ANSWER_ID);
+  const coachNoIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.RES_COACH_NO);
+  const clientNameIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.NAME_KANJI);
+  const clientNoteIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
 
   let coachNo = null;
   let clientName = null;
@@ -171,8 +171,8 @@ if (
   const coachData = coachSheet.getDataRange().getValues();
   const coachHeaders = coachData[0];
 
-  const coachNoColIndex = coachHeaders.indexOf("コーチNo.");
-  const coachLineIdIndex = coachHeaders.indexOf("LINE ID");
+  const coachNoColIndex = coachHeaders.indexOf(COACH_LIST_TBL.COACH_NO);
+  const coachLineIdIndex = coachHeaders.indexOf(COACH_LIST_TBL.LINE_ID);
 
   let coachLineId = null;
   for (let i = 1; i < coachData.length; i++) {
