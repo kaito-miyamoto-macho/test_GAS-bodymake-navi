@@ -127,3 +127,5 @@ function getCoachLineId(coachNumber) {
     Logger.log(`⚠️ コーチNo.${coachNumber} に対応するLINE IDが見つかりません`);
     return "";
 }
+
+
