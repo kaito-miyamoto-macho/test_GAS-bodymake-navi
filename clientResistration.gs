@@ -47,7 +47,7 @@ function transferMappedDataToAnotherSpreadsheet(sourceSheet, lastRow) {
   const sourceData = sourceSheet.getRange(lastRow, 1, 1, sourceSheet.getLastColumn()).getValues()[0];
 
   const answerId = sourceData[sourceHeaders.indexOf(ELME_HIDDEN_COL.ANSWER_ID)];
-  const authInfo = findAuthInfoByAnswerId(answerId);
+  const authInfo = findAuthInfoByAnswerId(answerId, USER_TYPE.CLIENT);
 
   if (!authInfo) {
     Logger.log(`❌ 認証管理シートに回答者ID [${answerId}] が見つかりませんでした。処理を停止します。`);
@@ -625,7 +625,7 @@ function formatDateToYYYYMMDD(rawDateValue) {
 /**
  * 認証管理シートから回答者IDに基づいて情報を取得
  */
-function findAuthInfoByAnswerId(answerId) {
+function findAuthInfoByAnswerId(answerId, userType) {
   Logger.log("🔹 findAuthInfoByAnswerId 関数開始");
   Logger.log(`回答者ID: ${answerId}を元に対象データを取得`)
   const authTBL = GET_AUTH_SHEET();
@@ -633,10 +633,12 @@ function findAuthInfoByAnswerId(answerId) {
   const authAllData = GET_All_DATA(authTBL);
 
   const authAnswerIdColIndex = authHeader.indexOf(AUTH_LIST_TBL.ANSWER_ID);
+  const authUserTypeColIndex = authHeader.indexOf(AUTH_LIST_TBL.USER_TYPE);
   const authDeleteFlgColIndex = authHeader.indexOf(AUTH_LIST_TBL.DELETE_FLG);
 
   for (let i = 1; i < authAllData.length; i++) {
-    if (authAllData[i][authAnswerIdColIndex] === answerId 
+    if (authAllData[i][authAnswerIdColIndex] === answerId
+        && authAllData[i][authUserTypeColIndex] === userType
         && authAllData[i][authDeleteFlgColIndex] !== DELETE_FLG.ON ) {
       Logger.log(`回答者IDを元に取得したデータ`);
       Logger.log(`メールアドレス:${authAllData[i][authHeader.indexOf(AUTH_LIST_TBL.MAIL)]}`);
