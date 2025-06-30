@@ -32,8 +32,8 @@ function allPeriodStackedReportCreation() {
   // クライアント名簿のデータ部分
   const clientData = clientSheet.getDataRange().getValues();
   // クライアントノートのURLが入力されてる列
-  const noteIndex = clientSheetHeaders.indexOf("クライアントノート");
-  const useStartDateIndex = clientSheetHeaders.indexOf("アンケート回答日");
+  const noteIndex = clientSheetHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
+  const useStartDateIndex = clientSheetHeaders.indexOf(CLIENT_LIST_TBL.ENQUETE_ANSWER_DATE);
 
   const today = new Date();
   today.setDate(today.getDate() - 1); 
@@ -78,7 +78,7 @@ function allPeriodStackedReportCreation() {
     const useWeek = Math.floor(useDays / 7) + 1;
 
     // 「積み上げレポートURL」列を特定
-    const urlColIndex = allWeeklyPiledUpHeaders.indexOf("積み上げレポートURL");
+    const urlColIndex = allWeeklyPiledUpHeaders.indexOf(ALL_WEEKLY_PILED_UP.STACKED_REPORT_URL);
 
     // 書き込み対象の行を算出（WEEK1が4行目に対応）
     const targetRow = ALL_WEEKLY_PILED_UP_HEADER_ROW + useWeek;
