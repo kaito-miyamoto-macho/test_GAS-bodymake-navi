@@ -13,12 +13,8 @@
 
 function clientDateUpdate(sourceSheet, lastRow) {
    Logger.log("アカウント情報更新 start")
-  // 250115_【PJT管理】ボディメイクナビ登録者名簿を取得
-  const targetSpreadsheetId = SPREAD_SHEET_IDS.PJTManagement;
-  const targetSpreadsheet = SpreadsheetApp.openById(targetSpreadsheetId);
-
   // クライアント名簿
-  const targetClientSheet = targetSpreadsheet.getSheetByName(SHEET_NAMES_MANAGEMENT.CLIENT_LIST);
+  const targetClientSheet = GET_CLIENT_SHEET();
 
   if (!sourceSheet || !targetClientSheet) {
     Logger.log("シートが見つかりません");
@@ -93,7 +89,7 @@ function clientDateUpdate(sourceSheet, lastRow) {
 
   // 「サポートフェーズ選択」に応じてサポートノートの列を切り替える
   // クライアントノートのURLを取得
-  const noteIndex = targetHeaders.indexOf("クライアントノート");
+  const noteIndex = targetHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
   const clientNoteURL = noteIndex !== -1 ? targetClientSheet.getRange(targetRow, noteIndex + 1).getValue() : "";
 
   if (!clientNoteURL) {
@@ -289,24 +285,25 @@ function clientDateUpdate(sourceSheet, lastRow) {
 
   // 更新が完了したらクライアント、コーチにメッセージを送る
   // クライアントのLINE IDを取得
-  const clientLineIdColIndex = targetHeaders.indexOf('LINE ID');
-  const byCoachNoColIndex = targetHeaders.indexOf('担当コーチNo.');
-  const clientNoteColIndex = targetHeaders.indexOf('クライアントノート');
-  const clientNameColIndex = targetHeaders.indexOf('LINE名');
+  const clientLineIdColIndex = targetHeaders.indexOf(CLIENT_LIST_TBL.LINE_ID);
+  const byCoachNoColIndex = targetHeaders.indexOf(CLIENT_LIST_TBL.RES_COACH_NO);
+  const clientNoteColIndex = targetHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
+  const clientNameColIndex = targetHeaders.indexOf(CLIENT_LIST_TBL.LINE_NAME);
 
   const clientLineId = clientLineIdColIndex !== -1 ? targetClientSheet.getRange(targetRow, clientLineIdColIndex + 1).getValue() : "";
   const coachNo = byCoachNoColIndex !== -1 ? targetClientSheet.getRange(targetRow, byCoachNoColIndex + 1).getValue() : "";
   const clientNoteUrl = clientNoteColIndex !== -1 ? targetClientSheet.getRange(targetRow, clientNoteColIndex + 1).getValue() : "";
   const clientName = clientNameColIndex !== -1 ? targetClientSheet.getRange(targetRow, clientNameColIndex + 1).getValue() : "";
 
-  const targetCoachSheet = targetSpreadsheet.getSheetByName(SHEET_NAMES_MANAGEMENT.COACH_LIST);
+  // コーチ名簿取得
+  const targetCoachSheet = GET_COACH_SHEET();
 
   // コーチ名簿のデータ取得
   const coachData = targetCoachSheet.getDataRange().getValues();
   const coachHeaders = coachData[0];
 
-  const coachNoColIndex = coachHeaders.indexOf("コーチNo.");
-  const coachLineIdIndex = coachHeaders.indexOf("LINE ID");
+  const coachNoColIndex = coachHeaders.indexOf(COACH_LIST_TBL.COACH_NO);
+  const coachLineIdIndex = coachHeaders.indexOf(COACH_LIST_TBL.LINE_ID);
 
   let coachLineId = null;
   for (let i = 1; i < coachData.length; i++) {
@@ -360,12 +357,8 @@ sendLINEMessage(coachLineId, coachMsg);
  */
 function goalUpdate (sourceSheet, lastRow) {
   Logger.log("GOAL更新start");
-   // 250115_【PJT管理】ボディメイクナビ登録者名簿を取得
-  const targetSpreadsheetId = SPREAD_SHEET_IDS.PJTManagement;
-  const targetSpreadsheet = SpreadsheetApp.openById(targetSpreadsheetId);
-
   // クライアント名簿
-  const targetClientSheet = targetSpreadsheet.getSheetByName(SHEET_NAMES_MANAGEMENT.CLIENT_LIST);
+  const targetClientSheet = GET_COACH_SHEET();
 
   if (!sourceSheet || !targetClientSheet) {
     Logger.log("シートが見つかりません");
@@ -467,7 +460,7 @@ function goalUpdate (sourceSheet, lastRow) {
    Logger.log("GOAL更新書き込み処理終了");
 
   // GOAL更新完了通知をLINEで送信
-  const coachSheet = targetSpreadsheet.getSheetByName(SHEET_NAMES_MANAGEMENT.COACH_LIST);
+  const coachSheet = GET_COACH_SHEET();
   // コーチ名簿のデータ取得
   const coachData = coachSheet.getDataRange().getValues();
   // コーチ名簿のヘッダー
