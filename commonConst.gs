@@ -58,13 +58,25 @@ const LINE_FROM_URLS = IS_PRODUCTION_FLG ? {
   MAIL_UPDATE: "https://liff.line.me/2007474035-rBkeNA5R?unique_key=EMzYhM&ts=1750926138"
 };
 
+// 流入アクションURL
+const INFLOW_ACTION_URL = IS_PRODUCTION_FLG ? {
+  // 本番環境
+  CLIENT_INFLOW: "https://s.lmes.jp/landing-qr/2006759470-O5rkJVEj?uLand=DZLo0R",
+  COACH_INFLOW: "https://s.lmes.jp/landing-qr/2006759470-O5rkJVEj?uLand=ZlL6AA"
+
+} : {
+  // テスト環境
+  CLIENT_INFLOW: "https://s.lmes.jp/landing-qr/2007474035-LM3kYGnK?uLand=kTscOS",
+  COACH_INFLOW: "https://s.lmes.jp/landing-qr/2007474035-LM3kYGnK?uLand=pcci7h"
+}
+
 
 // 【注意！】new deployするとwebURL変わるためnewした場合は設定しなおす。
 const WEB_APP_URL = IS_PRODUCTION_FLG ? 
 // 本番環境　TODO 本番環境で確認
 '' 
 // テスト環境
-:'https://script.google.com/macros/s/AKfycbyAZwbNzz7F-MKMxGaPkXFw_2lLIQfzjUGVGa63GZWJx1WWqx3MKtxcDI4exZtALtU19g/exec';
+:'https://script.google.com/macros/s/AKfycbyyQMU9xWWD4Su0OoD7HmUEFzz5V6Na2Sek6TXqNrCzlBFnixc_9tIxQkWIb73qoxhEug/exec';
 
 
 const LIFF_APP_URL = IS_PRODUCTION_FLG ?
