@@ -102,6 +102,9 @@ function GET_HEADER (sheet, headerRow) {
  * return データ部分
  */
 function GET_All_DATA (sheet) {
+  if (sheet.getLastRow() <= 1) {
+    return [];
+  }
   return sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();;
 }
 
