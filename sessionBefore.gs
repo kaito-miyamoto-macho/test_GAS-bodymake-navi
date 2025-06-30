@@ -2,8 +2,6 @@ function transferSessionBeforeData() {
     const outputSS = SpreadsheetApp.openById(SPREAD_SHEET_IDS.SESSION_BEFORE); // スプレッドシートのIDをオープン
     const pjtSS = SpreadsheetApp.openById(SPREAD_SHEET_IDS.PJTManagement);
 
-
-
     const outputSheet = outputSS.getSheetByName("シート1");
     const customerSheet = pjtSS.getSheetByName(SHEET_NAMES_MANAGEMENT.CLIENT_LIST);
 
