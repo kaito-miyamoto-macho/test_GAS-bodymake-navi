@@ -1,5 +1,4 @@
 function transferSessionAfterData() {
-    const settingsSS = SpreadsheetApp.getActiveSpreadsheet(); // システム設定用スプレッドシート
     const outputSS = SpreadsheetApp.openById(SPREAD_SHEET_IDS.SESSION_AFTER); // スプレッドシートのIDをオープン
     const pjtSS = SpreadsheetApp.openById(SPREAD_SHEET_IDS.PJTManagement);
 
