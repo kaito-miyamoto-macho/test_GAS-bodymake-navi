@@ -443,20 +443,20 @@ function goalUpdate (sourceSheet, lastRow) {
 
   Logger.log("GOAL更新書き込み処理開始");
   // 人生のゴール
-  const lifeGoalArea = "J9"
-  goalSheet.getRange(lifeGoalArea).setValue(lifeGoal);
+  const LIFE_GOAL_AREA = "J9"
+  goalSheet.getRange(LIFE_GOAL_AREA).setValue(lifeGoal);
   // ボディメイクの目的
-  const bodyMakeTargetArea = "J10"
-  goalSheet.getRange(bodyMakeTargetArea).setValue(bodyMakeTarget);
+  const BODY_MAKE_TARGET_AREA = "J10"
+  goalSheet.getRange(BODY_MAKE_TARGET_AREA).setValue(bodyMakeTarget);
   // 理想の身体
-  const idealBodyArea = "J11"
-  goalSheet.getRange(idealBodyArea).setValue(idealBody);
+  const IDEAL_BODY_AREA = "J11"
+  goalSheet.getRange(IDEAL_BODY_AREA).setValue(idealBody);
   // 1年後の目標
-  const targetAfter1YearArea = "J12"
-  goalSheet.getRange(targetAfter1YearArea).setValue(targetAfter1Year);
+  const TARGET_AFTER_1YEAR_AREA = "J12"
+  goalSheet.getRange(TARGET_AFTER_1YEAR_AREA).setValue(targetAfter1Year);
   // 3ヶ月後の目標
-  const targetAfter3monthArea = "J13"
-  goalSheet.getRange(targetAfter3monthArea).setValue(currentTarget);
+  const TARGET_AFTER_3MONTH_AREA = "J13"
+  goalSheet.getRange(TARGET_AFTER_3MONTH_AREA).setValue(currentTarget);
    Logger.log("GOAL更新書き込み処理終了");
 
   // GOAL更新完了通知をLINEで送信
@@ -464,7 +464,7 @@ function goalUpdate (sourceSheet, lastRow) {
   // コーチ名簿のデータ取得
   const coachData = coachSheet.getDataRange().getValues();
   // コーチ名簿のヘッダー
-  const coachHeaders = coachSheet.getRange(1, 1, 1, coachSheet.getLastColumn()).getValues()[0];
+  const coachHeaders = GET_HEADER(coachSheet, 1);
 
   const coachNoColIndex = coachHeaders.indexOf(COACH_LIST_TBL.COACH_NO);
   const coachLineIdIndex = coachHeaders.indexOf(COACH_LIST_TBL.LINE_ID);
@@ -499,54 +499,6 @@ ${clientNoteURL}`;
 
   Logger.log("GOAL更新end");
 }
-
-
-
-
-
-/**
- * Gmailアドレスのみに編集権限を付与し、それ以外の権限を削除
- */ 
-function allowClientNoteAccess(clientEmail, coachEmail, file) {
-  const fileId = file.getId(); // ← これが必要
-  const allowedEmails = [clientEmail, coachEmail].filter(email => email && email.endsWith("@gmail.com")); // Gmailアドレスのみ許可
-
-  // 現在の編集者を取得
-  const currentEditors = file.getEditors().map(user => user.getEmail());
-
-  // コーチとクライアント以外の編集者を削除
-  currentEditors.forEach(email => {
-    if (!allowedEmails.includes(email)) {
-      try {
-        file.removeEditor(email);
-        Logger.log("不要な編集者を削除: " + email);
-      } catch (e) {
-        Logger.log("削除エラー: " + email + " - " + e.toString());
-      }
-    }
-  });
-
-  // Gmailアドレスのみに編集権限を付与（通知なしで）
-  allowedEmails.forEach(email => {
-    try {
-      Drive.Permissions.create(
-        {
-          role: "writer",
-          type: "user",
-          emailAddress: email
-        },
-        fileId,
-        { sendNotificationEmail: false } // ← v3ではここが単数形
-      );
-      Logger.log("✅ 通知なしで編集権限を付与: " + email);
-    } catch (e) {
-      Logger.log("⚠️ 編集権限の付与エラー: " + email + " - " + e.toString());
-    }
-  });
-  // リンク共有を無効化（重要）
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.NONE);
-}
-
 
 /********************
  * フォーム回答内容でパーソナルデータシートを更新する
@@ -594,66 +546,4 @@ function updatePersonalDataToClientNote(archiveSS, sourceHeaders, sourceData) {
     }
 
     Logger.log("パーソナルデータの転記が完了しました");
-}
-
-
-/********************
- * 回答者IDまたはLINE名を基準に更新対象の行を取得
- *********************/
-function findTargetRowByIdOrLineName(targetClientSheet, sourceHeaders, sourceData, targetHeaders) {
-  Logger.log("🔹 findTargetRowByIdOrLineName 関数開始");
-
-  const existingData = targetClientSheet.getDataRange().getValues();
-  Logger.log(`📌 取得済みのシートデータの行数: ${existingData.length}`);
-
-  const lineNameColIndex = targetHeaders.indexOf('LINE名');
-  const answerIdColIndex = targetHeaders.indexOf('回答者ID');
-
-  Logger.log(`📌 LINE名の列インデックス: ${lineNameColIndex}`);
-  Logger.log(`📌 回答者IDの列インデックス: ${answerIdColIndex}`);
-
-  if (lineNameColIndex === -1 || answerIdColIndex === -1) {
-    Logger.log("❌ LINE名または回答者IDの列が見つかりません");
-    return null;
-  }
-
-  const targetLineName = (sourceData[sourceHeaders.indexOf('回答者名')] || "").toString().trim();
-  const targetAnswerId = (sourceData[sourceHeaders.indexOf('回答者ID')] || "").toString().trim();
-
-  Logger.log(`🔍 照合対象: LINE名=${targetLineName}, 回答者ID=${targetAnswerId}`);
-
-  for (let i = 1; i < existingData.length; i++) {
-    const rowLineName = (existingData[i][lineNameColIndex] || "").toString().trim();
-    const rowAnswerId = (existingData[i][answerIdColIndex] || "").toString().trim();
-
-    if (rowLineName === targetLineName && rowAnswerId === targetAnswerId) {
-      Logger.log(`✅ 完全一致する行を発見: ${i + 1}`);
-      return i + 1;
-    }
-
-    if (rowLineName === targetLineName && rowAnswerId === "") {
-      Logger.log(`✅ LINE名は一致し、回答者IDが未記入: ${i + 1}`);
-      return i + 1;
-    }
-  }
-
-  Logger.log("⚠️ 該当する行が見つからない");
-  return null;
-}
-
-
-
-/**
- * 日付を yyyy/MM/dd 形式に整形
- */
-function formatDateToYYYYMMDD(rawDateValue) {
-  if (!rawDateValue) return "";
-
-  try {
-    const dateValue = new Date(rawDateValue.replace(/^(?:'|")|(?:'|")$/g, '').replace(/(am|pm)$/i, " $1").toUpperCase());
-    return Utilities.formatDate(dateValue, Session.getScriptTimeZone(), 'yyyy/MM/dd');
-  } catch (e) {
-    Logger.log(`日付フォーマットエラー: ${rawDateValue}`);
-    return "";
-  }
 }
