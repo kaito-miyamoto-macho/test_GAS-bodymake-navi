@@ -80,7 +80,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
   let inputAuthLineName = "";
   let inputUserType = "";
   // =========================================
-
+  
 
   if (registFlg) {
     // メール認証(登録)
@@ -354,7 +354,6 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
     }
 
     // 認証情報TBLにinsertするデータをセット
-    inputAuthType = AUTH_TYPE.REGIST;
     inputUserType = userType;
 
   } else {
@@ -413,7 +412,6 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
     if (clientExistFlg && coachExistFlg) {
       inputUserType = USER_TYPE.BOTH;
     }
-    inputAuthType = AUTH_TYPE.UPDATE;
   }
 
   // トークン発行
@@ -447,8 +445,8 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
   authTBL.getRange(insertTargetRow, userTypeColIndex + 1).setValue(inputUserType);
   authTBL.getRange(insertTargetRow, authTypeColIndex + 1).setValue(registFlg ?  AUTH_TYPE.REGIST : AUTH_TYPE.UPDATE);
   authTBL.getRange(insertTargetRow, authDeleteFlgColIndex + 1).setValue("");
-  authTBL.getRange(insertTargetRow, authCreateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm");
-  authTBL.getRange(insertTargetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm");
+  authTBL.getRange(insertTargetRow, authCreateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
+  authTBL.getRange(insertTargetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
 
 
   // 追加した行の各セルを囲う
@@ -660,18 +658,26 @@ function doGet(e) {
         return dispAuthErrHtml();
       }
       // 取得したコーチのメールを格納
-      coachEmail = targetCoachData[coachMailColIndex];
+      coachMail = targetCoachData[coachMailColIndex];
 
-      // クライアントノートのファイルIDを取得
-      const match = clientNoteUrl.match(/[-\w]{25,}/);
-      if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
-      const fileId = match[0];
-      const clientNoteFile = DriveApp.getFileById(fileId);
+      try {
+          // クライアントノートのファイルIDを取得
+          const match = clientNoteUrl.match(/[-\w]{25,}/);
+          if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
+          const fileId = match[0];
+          const clientNoteFile = DriveApp.getFileById(fileId);
 
-      // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
-      debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachEmail},クライアントメール${clientMail}`]);
-      allowClientNoteAccess(clientMail, coachEmail, clientNoteFile);
-      debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
+          // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
+          debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
+          allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
+        } catch (e) {
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${clientMail} - ${clientNoteUrl} - ${e}`]);
+          sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
+              `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
+              `${INQUIRY_FORM}`);
+          return dispPermissionErrHtml();
+        }
+        debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
 
 
   } else if (authUserType === USER_TYPE.COACH) {
@@ -715,7 +721,7 @@ function doGet(e) {
       }
 
       // 一括で権限変更
-      clientNoteList.forEach(({ tmpEmail, tmpNoteUrl }) => {
+      for (const { tmpEmail, tmpNoteUrl } of clientNoteList) {
         try {
           const fileId = tmpNoteUrl.match(/[-\w]{25,}/)[0];
           const file = DriveApp.getFileById(fileId);
@@ -728,7 +734,7 @@ function doGet(e) {
               `${INQUIRY_FORM}`);
           return dispPermissionErrHtml();
         }
-      });
+      }
 
   } else if (authUserType === USER_TYPE.BOTH) { // クライアント、コーチ両権限
 
@@ -782,16 +788,25 @@ function doGet(e) {
       // 取得したコーチのメールを格納
       coachMail = targetCoachData[coachMailColIndex];
 
-      // クライアントノートのファイルIDを取得
-      const match = clientNoteUrl.match(/[-\w]{25,}/);
-      if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
-      const fileId = match[0];
-      const clientNoteFile = DriveApp.getFileById(fileId);
 
-      // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
-      debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
-      allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
-      debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
+      try {
+          // クライアントノートのファイルIDを取得
+          const match = clientNoteUrl.match(/[-\w]{25,}/);
+          if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
+          const fileId = match[0];
+          const clientNoteFile = DriveApp.getFileById(fileId);
+
+          // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
+          debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
+          allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
+        } catch (e) {
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${clientMail} - ${clientNoteUrl} - ${e}`]);
+          sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
+              `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
+              `${INQUIRY_FORM}`);
+          return dispPermissionErrHtml();
+        }
+        debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
 
 
       // コーチとしての処理
@@ -834,7 +849,7 @@ function doGet(e) {
       }
 
       // 一括で権限変更
-      clientNoteList.forEach(({ tmpEmail, tmpNoteUrl }) => {
+      for (const { tmpEmail, tmpNoteUrl } of clientNoteList) {
         try {
           const fileId = tmpNoteUrl.match(/[-\w]{25,}/)[0];
           const file = DriveApp.getFileById(fileId);
@@ -847,7 +862,7 @@ function doGet(e) {
               `${INQUIRY_FORM}`);
           return dispPermissionErrHtml();
         }
-      });
+      }
   }
 
   // 変更完了メッセージ
