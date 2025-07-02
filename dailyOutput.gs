@@ -20,7 +20,7 @@ function  noteDailyOutput() {
   const clientId = Number(rawResponse["回答者ID"]);
   if (isNaN(clientId)) {
   return Logger.log("エラー: 回答者IDが数値として不正です");
-}
+  }
 
 
   // クライアント名簿からスプレッドシートURLを取得
@@ -38,11 +38,11 @@ function  noteDailyOutput() {
   }
 
   const clientMap = new Map(
-  clientData.slice(1).map(row => [
-    Number(row[clientIdIndex]), // ←ここを数値に
-    extractSpreadsheetId(row[clientSheetUrlIndex])
-  ])
-);
+    clientData.slice(1).map(row => [
+      Number(row[clientIdIndex]), // ←ここを数値に
+      extractSpreadsheetId(row[clientSheetUrlIndex])
+    ])
+  );
 
 
 
