@@ -139,25 +139,28 @@ function sendCoachNotification(targetSheet, row, targetHeaders) {
   const foldeURL = targetSheet.getRange(row, targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].indexOf(COACH_LIST_TBL.DEDICATED_FOLDER_URL) + 1).getValue();
   const coahNo = targetSheet.getRange(row, targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].indexOf(COACH_LIST_TBL.COACH_NO) + 1).getValue();
   const message = `【コーチ登録完了】\n\n${fullName} 様\n\nコーチNo：${coahNo}\nコーチ専用フォルダURL：${foldeURL}`;
-  const message2 = `▼クライアント登録の手順▼
-  以下の内容をクライアントに送信してください！
-  ※なお、コーチ番号が間違っていないかの確認と
-  「サポートフェーズ」の〇〇に当てはまる数字を記入した上で送信していただくようお願いいたします！`;
+  const message2 = `▼以下の文章をコピペして、クライアントに送ってください▼
 
-const message3 = ` ▼以下の文章をコピペしてクライアントに送信▼
+───────────────
+
+【サポート開始のご案内】
 
 サポート開始にあたりボディメイクコーチサポート専用LINEの友達追加をお願いします！
 
-こちら↓
+⬇こちらから登録⬇
 ${INFLOW_ACTION_URL.CLIENT_INFLOW}
 
-「初回登録フォーム」が送信されますので、ご入力ください！
+※「初回登録フォーム」が送信されますので、ご入力ください！
 
 ※入力に必要な情報は下記をご確認ください。
 コーチ番号：${coahNo}
-サポートフェーズ：⚪︎
+サポートフェーズ：:⚪︎
 
-以上、ご確認お願いいたします！`
+以上、ご確認お願いいたします！
+
+───────────────
+
+※このURLは「クライアント様専用」です。コーチの方は絶対にタップしないようご注意ください。`
 
   const lineIdColIndex = targetHeaders.indexOf(COACH_LIST_TBL.LINE_ID) + 1;
   const lineId = targetSheet.getRange(row, lineIdColIndex).getValue();
