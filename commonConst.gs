@@ -76,7 +76,7 @@ const WEB_APP_URL = IS_PRODUCTION_FLG ?
 // 本番環境　TODO 本番環境で確認
 '' 
 // テスト環境
-:'https://script.google.com/macros/s/AKfycbyyQMU9xWWD4Su0OoD7HmUEFzz5V6Na2Sek6TXqNrCzlBFnixc_9tIxQkWIb73qoxhEug/exec';
+:'https://script.google.com/macros/s/AKfycbz2dI1rSkaMMkRwdu2rmIMh0dIBY1SkLWcXGcqZ8zOZfsCFCIVLMkeyEogF_V3pkl2NcA/exec';
 
 
 const LIFF_APP_URL = IS_PRODUCTION_FLG ?
@@ -296,3 +296,8 @@ const BODY_MAKE_NAVI_LINE_ID = IS_PRODUCTION_FLG ?
 "@249ctzxl":
 // テスト環境
 "@673gaxvr"
+
+// ボディメイクナビのGmailアカウント
+const GAS_OWNER_EMAIL = "info@compass-bodymake.co.jp";
+
+
