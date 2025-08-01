@@ -17,7 +17,7 @@ function processSurveyResponse() {
     const responseData = responseSheet.getRange(lastRow, 1, 1, responseSheet.getLastColumn()).getValues()[0]; // 最新の回答
 
     // 「回答者ID」の列を取得
-    const responseIdIndex = headers.indexOf("回答者ID");
+    const responseIdIndex = headers.indexOf(ELME_HIDDEN_COL.ANSWER_ID);
     if (responseIdIndex === -1) {
         Logger.log("⚠️ 回答者IDの列が見つかりません");
         return;
@@ -32,8 +32,8 @@ function processSurveyResponse() {
     // クライアント名簿から回答者IDに対応するクライアントノートのURLを取得
     const customerData = customerSheet.getDataRange().getValues();
     const customerHeaders = customerData[0];
-    const customerIdIndex = customerHeaders.indexOf("回答者ID");
-    const noteIndex = customerHeaders.indexOf("クライアントノート");
+    const customerIdIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.ANSWER_ID);
+    const noteIndex = customerHeaders.indexOf(CLIENT_LIST_TBL.CLIENT_NOTE_URL);
 
     if (customerIdIndex === -1 || noteIndex === -1) {
         Logger.log("⚠️ クライアント名簿に必要な列がありません");
@@ -61,7 +61,7 @@ function processSurveyResponse() {
     }
 
     const clientSpreadsheet = SpreadsheetApp.openById(clientSheetId);
-    const habitSheet = clientSpreadsheet.getSheetByName("【月次】習慣化ﾁｪｯｸﾘｽﾄ");
+    const habitSheet = clientSpreadsheet.getSheetByName(SHEET_NAMES_CLIENTSUPPORT.MONTHLY_HABIT_CHECK_LIST);
 
     if (!habitSheet) {
         Logger.log(`⚠️ クライアント ${responseId} の習慣化ﾁｪｯｸﾘｽﾄシートが見つかりません`);

@@ -58,13 +58,25 @@ const LINE_FROM_URLS = IS_PRODUCTION_FLG ? {
   MAIL_UPDATE: "https://liff.line.me/2007474035-rBkeNA5R?unique_key=EMzYhM&ts=1750926138"
 };
 
+// 流入アクションURL
+const INFLOW_ACTION_URL = IS_PRODUCTION_FLG ? {
+  // 本番環境
+  CLIENT_INFLOW: "https://s.lmes.jp/landing-qr/2006759470-O5rkJVEj?uLand=DZLo0R",
+  COACH_INFLOW: "https://s.lmes.jp/landing-qr/2006759470-O5rkJVEj?uLand=ZlL6AA"
+
+} : {
+  // テスト環境
+  CLIENT_INFLOW: "https://s.lmes.jp/landing-qr/2007474035-LM3kYGnK?uLand=kTscOS",
+  COACH_INFLOW: "https://s.lmes.jp/landing-qr/2007474035-LM3kYGnK?uLand=pcci7h"
+}
+
 
 // 【注意！】new deployするとwebURL変わるためnewした場合は設定しなおす。
 const WEB_APP_URL = IS_PRODUCTION_FLG ? 
 // 本番環境　TODO 本番環境で確認
 '' 
 // テスト環境
-:'https://script.google.com/macros/s/AKfycbyc684rMwoAZ0QUrsZD9jNAPvjHHPewXUtAqGC55swBaEmro_7gd1ukXrL6lArsVe3X_g/exec';
+:'https://script.google.com/macros/s/AKfycbz2dI1rSkaMMkRwdu2rmIMh0dIBY1SkLWcXGcqZ8zOZfsCFCIVLMkeyEogF_V3pkl2NcA/exec';
 
 
 const LIFF_APP_URL = IS_PRODUCTION_FLG ?
@@ -96,6 +108,8 @@ const SHEET_NAMES_CLIENTSUPPORT = {
   MONTHLY_BODY_CHANGE: "【月次】身体の変化 ",
   MONTHLY_HABIT_CHECK_LIST: "【月次】習慣化ﾁｪｯｸﾘｽﾄ",
   COURSE_PROGRESS_MANAGEMENT: "ﾎﾞﾃﾞｨﾒｲｸ完全解説　進捗管理",
+  SESSION_ARCHIVE: "ｾｯｼｮﾝｱｰｶｲﾌﾞ",
+  PERSONAL_DATA: "ﾊﾟｰｿﾅﾙﾃﾞｰﾀ"
 }
 
 // デバッグログ管理の各シート名
@@ -110,8 +124,6 @@ const LOG_MANAGEMENT = {
   GOAL_UPDATE : "ゴール更新",
   MOVIE_COURSE_OUTPUT: "動画講座アウトプット",
   ALL_PERIOD_STACKED_REPORT: "【バッチ】全期間積み上げレポート作成",
-  SESSION_ARCHIVE: "ｾｯｼｮﾝｱｰｶｲﾌﾞ",
-  PERSONAL_DATA: "ﾊﾟｰｿﾅﾙﾃﾞｰﾀ"
 }
 
 /**
@@ -244,7 +256,7 @@ const WEEKLY_PILED_UP = {
 }
 // 【集計】全期間積み上げﾚﾎﾟｰﾄ
 const ALL_WEEKLY_PILED_UP = {
-
+  STACKED_REPORT_URL: "積み上げレポートURL"
 }
 // 【月次】身体の変化 
 const MONTHLY_BODY_CHANGE = {
@@ -284,3 +296,8 @@ const BODY_MAKE_NAVI_LINE_ID = IS_PRODUCTION_FLG ?
 "@249ctzxl":
 // テスト環境
 "@673gaxvr"
+
+// ボディメイクナビのGmailアカウント
+const GAS_OWNER_EMAIL = "info@compass-bodymake.co.jp";
+
+

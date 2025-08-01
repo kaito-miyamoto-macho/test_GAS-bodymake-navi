@@ -14,7 +14,7 @@ function processCoachRegistration(sheet, lastRow) {
   const sourceData = sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).getValues()[0];
 
   const answerId = sourceData[sourceHeaders.indexOf("回答者ID")];
-  const authInfo = findAuthInfoByAnswerId(answerId);
+  const authInfo = findAuthInfoByAnswerId(answerId, USER_TYPE.COACH);
 
   if (!authInfo) {
     const logMsg = `❌ 認証管理シートに回答者ID [${answerId}] が見つかりませんでした。処理を停止します。`;
@@ -139,25 +139,28 @@ function sendCoachNotification(targetSheet, row, targetHeaders) {
   const foldeURL = targetSheet.getRange(row, targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].indexOf(COACH_LIST_TBL.DEDICATED_FOLDER_URL) + 1).getValue();
   const coahNo = targetSheet.getRange(row, targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].indexOf(COACH_LIST_TBL.COACH_NO) + 1).getValue();
   const message = `【コーチ登録完了】\n\n${fullName} 様\n\nコーチNo：${coahNo}\nコーチ専用フォルダURL：${foldeURL}`;
-  const message2 = `▼クライアント登録の手順▼
-  以下の内容をクライアントに送信してください！
-  ※なお、コーチ番号が間違っていないかの確認と
-  「サポートフェーズ」の〇〇に当てはまる数字を記入した上で送信していただくようお願いいたします！`;
+  const message2 = `▼以下の文章をコピペして、クライアントに送ってください▼
 
-const message3 = ` ▼以下の文章をコピペしてクライアントに送信▼
+───────────────
+
+【サポート開始のご案内】
 
 サポート開始にあたりボディメイクコーチサポート専用LINEの友達追加をお願いします！
 
-こちら↓
-${LINE_FROM_URLS.CLIENT_REGIST}
+⬇こちらから登録⬇
+${INFLOW_ACTION_URL.CLIENT_INFLOW}
 
-「ツール利用登録フォーム」が送信されますので、ご入力ください！
+※「初回登録フォーム」が送信されますので、ご入力ください！
 
 ※入力に必要な情報は下記をご確認ください。
 コーチ番号：${coahNo}
-サポートフェーズ：⚪︎
+サポートフェーズ：:⚪︎
 
-以上、ご確認お願いいたします！`
+以上、ご確認お願いいたします！
+
+───────────────
+
+※このURLは「クライアント様専用」です。コーチの方は絶対にタップしないようご注意ください。`
 
   const lineIdColIndex = targetHeaders.indexOf(COACH_LIST_TBL.LINE_ID) + 1;
   const lineId = targetSheet.getRange(row, lineIdColIndex).getValue();
@@ -244,7 +247,8 @@ function addNewCoachRow(targetSheet, sourceHeaders, sourceData, columnMapping, t
 
   const range = targetSheet.getRange(newRowPosition, 1, 1, targetSheet.getLastColumn());
   range.setBackground('#ffffff');
-  range.setBorder(true, true, true, true, true, true); // 
+  range.setFontColor("#000000");  
+  range.setBorder(true, true, true, true, true, true);
 
   return newRowPosition;
 }

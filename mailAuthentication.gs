@@ -80,7 +80,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
   let inputAuthLineName = "";
   let inputUserType = "";
   // =========================================
-
+  
 
   if (registFlg) {
     // メール認証(登録)
@@ -160,7 +160,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
           targetData = authAllData[j];
           if (targetData[authMailColIndex] === inputEmail 
               && targetData[authTypeColIndex] === AUTH_TYPE.REGIST
-              && targetData[authDeleteFlgColIndex] === DELETE_FLG.ON) {
+              && targetData[authDeleteFlgColIndex] !== DELETE_FLG.ON) {
                 targetRow = j + 2; //authAllDataがヘッダーの1行目がないためとindexが0からに合わせて+2
                 Logger.log(`送信されたメールアドレスが既に認証TBL ${targetRow}行目に存在`);
                 authAnswerId = targetData[authAnswerIdColIndex];
@@ -206,6 +206,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
           } 
           // 認証済みではない場合 or 認証情報が破損している場合
           // 該当の認証情報を論理削除し以降処理を行う
+          Logger.log(`既に登録されている認証情報を論理削除し、以降処理を行う`);
           authTBL.getRange(targetRow, authDeleteFlgColIndex + 1).setValue(DELETE_FLG.ON);
           authTBL.getRange(targetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
 
@@ -286,7 +287,7 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
           targetData = authAllData[j];
           if (targetData[authMailColIndex] === inputEmail 
               && targetData[authTypeColIndex] === AUTH_TYPE.REGIST
-              && targetData[authDeleteFlgColIndex] === DELETE_FLG.ON) {
+              && targetData[authDeleteFlgColIndex] !== DELETE_FLG.ON) {
                 targetRow = j + 2; //authAllDataがヘッダーの1行目がないためとindexが0からに合わせて+2
                 Logger.log(`送信されたメールアドレスが既に認証TBL ${targetRow}行目に存在`);
                 authAnswerId = targetData[authAnswerIdColIndex];
@@ -353,7 +354,6 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
     }
 
     // 認証情報TBLにinsertするデータをセット
-    inputAuthType = AUTH_TYPE.REGIST;
     inputUserType = userType;
 
   } else {
@@ -387,11 +387,12 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
     // クライアント・コーチ両名簿に存在しない場合未登録
     // メール更新に失敗・アカウントがボディメイクナビに登録されていないをメール通知
     if (!clientExistFlg && !coachExistFlg) {
-      Logger.log(`回答者ID ${answerId}の名簿が存在しません。`)
+      Logger.log(`回答者ID ${inputAnswerId}の名簿が存在しません。`)
       try {
         GmailApp.sendEmail(inputEmail, "【ボディメイクナビ】メール認証失敗",
           `メール認証に失敗しました。\n\n` +
-          `アカウントがボディメイクナビに登録されていません。`);
+          `アカウントがボディメイクナビに\n` +
+          `登録されていません。`);
           Logger.log(`✅ 失敗メール送信完了: ${inputEmail}`);
         } catch (e) {
           Logger.log(`⚠️ メール送信失敗: ${inputEmail} - ${e.toString()}`);
@@ -411,7 +412,6 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
     if (clientExistFlg && coachExistFlg) {
       inputUserType = USER_TYPE.BOTH;
     }
-    inputAuthType = AUTH_TYPE.UPDATE;
   }
 
   // トークン発行
@@ -445,13 +445,14 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
   authTBL.getRange(insertTargetRow, userTypeColIndex + 1).setValue(inputUserType);
   authTBL.getRange(insertTargetRow, authTypeColIndex + 1).setValue(registFlg ?  AUTH_TYPE.REGIST : AUTH_TYPE.UPDATE);
   authTBL.getRange(insertTargetRow, authDeleteFlgColIndex + 1).setValue("");
-  authTBL.getRange(insertTargetRow, authCreateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm");
-  authTBL.getRange(insertTargetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm");
+  authTBL.getRange(insertTargetRow, authCreateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
+  authTBL.getRange(insertTargetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
 
 
   // 追加した行の各セルを囲う
   const rowRange = authTBL.getRange(insertTargetRow, 1, 1, authTBL.getLastColumn());
   rowRange.setBackground("#ffffff");
+  rowRange.setFontColor("#000000");  
   rowRange.setBorder(true, true, true, true, true, true);
 
 
@@ -463,8 +464,9 @@ function authSendMail(sourceSheet, lastRow, registFlg, userType) {
   // 認証メール送信
   try {
     GmailApp.sendEmail(inputEmail, "【ボディメイクナビ】メール認証のお願い",
-      `以下のリンクをクリックして認証を完了してください：\n\n${authUrl}\n\n` +
-      "※このメールに心当たりがない場合は無視してください。");
+      `以下のリンクをクリックして\n認証を完了してください：\n\n${authUrl}\n\n` +
+      `※このメールに心当たりがない場合は\n無視してください。\n\n` +
+      `認証処理を行うため、\nリンクタップ後1分ほどお待ちください`);
     Logger.log(`✅ 認証メール送信完了: ${inputEmail}`);
   } catch (e) {
     Logger.log(`⚠️ メール送信失敗: ${inputEmail} - ${e.toString()}`);
@@ -492,15 +494,7 @@ function doGet(e) {
   // トークン取得失敗
   if (!token) {
     debugsheet.appendRow([new Date(), 'トークンが取得できませんでした。']);
-    return HtmlService.createHtmlOutput(`
-      <html>
-        <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-          <h2>メールアドレス認証失敗</h2>
-          <p style="font-size: 16px; margin-top: 20px;">
-            LINEに戻り、再度メール認証フォームより認証を行なってください。
-          </p>
-        </body>
-      </html>`);
+    return dispAgainAuthHtml();
   }
 
   // 認証情報テーブルを取得
@@ -538,15 +532,7 @@ function doGet(e) {
   // トークンに紐づく認証情報が存在しない場合エラー画面表示
   if (!updateTargetData) {
     debugsheet.appendRow([new Date(), `トークンに紐づく認証情報が存在なし`]);
-    return HtmlService.createHtmlOutput(`
-      <html>
-        <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-          <h2>メールアドレス認証失敗</h2>
-          <p style="font-size: 16px; margin-top: 20px;">
-            LINEに戻り、再度メール認証フォームより認証を行なってください。
-          </p>
-        </body>
-      </html>`);
+    return dispAgainAuthHtml();
   }
 
   const authAnswerId = updateTargetData[authAnswerIdColIndex];
@@ -566,30 +552,14 @@ function doGet(e) {
         debugsheet.appendRow([new Date(), `トークンに紐づく認証情報が不正`]);
         authTBL.getRange(updateTargetRow, authDeleteFlgColIndex + 1).setValue(DELETE_FLG.ON);
         authTBL.getRange(updateTargetRow, authUpdateDateColIndex + 1).setValue(new Date()).setNumberFormat("yyyy/MM/dd HH:mm:ss");
-        return HtmlService.createHtmlOutput(`
-          <html>
-            <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-              <h2>メールアドレス認証失敗</h2>
-              <p style="font-size: 16px; margin-top: 20px;">
-                LINEに戻り、再度メール認証フォームより認証を行なってください。
-              </p>
-            </body>
-          </html>`);
+        return dispAgainAuthHtml();
   }
 
   // 認証ステータスが認証完了していないか確認(ダブルタップされて以降処理をやらないため)
   if (authStatus === AUTH_STATUS.COMPLETE) {
     debugsheet.appendRow([new Date(), `トークンに紐づく認証情報が認証済み`]);
     sendLINEMessage(authLineId, `メールアドレス認証は既に完了しています。`);
-    return HtmlService.createHtmlOutput(`
-        <html>
-          <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-            <h2>メールアドレス認証済み</h2>
-            <p style="font-size: 16px; margin-top: 20px;">
-              メールアドレス認証は既に完了しています。
-            </p>
-          </body>
-        </html>`);
+    return dipsAlreadyAuthHtml();
   }
 
   // エラーが出なかったため認証完了にする
@@ -659,7 +629,7 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`)
-        return;
+        return dispAuthErrHtml();
       }
       
       // クライアント名簿のメールアドレスを更新
@@ -685,21 +655,29 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`)
-        return;
+        return dispAuthErrHtml();
       }
       // 取得したコーチのメールを格納
-      coachEmail = targetCoachData[coachMailColIndex];
+      coachMail = targetCoachData[coachMailColIndex];
 
-      // クライアントノートのファイルIDを取得
-      const match = clientNoteUrl.match(/[-\w]{25,}/);
-      if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
-      const fileId = match[0];
-      const clientNoteFile = DriveApp.getFileById(fileId);
+      try {
+          // クライアントノートのファイルIDを取得
+          const match = clientNoteUrl.match(/[-\w]{25,}/);
+          if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
+          const fileId = match[0];
+          const clientNoteFile = DriveApp.getFileById(fileId);
 
-      // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
-      debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachEmail},クライアントメール${clientMail}`]);
-      allowClientNoteAccess(clientMail, coachEmail, clientNoteFile);
-      debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
+          // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
+          debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
+          allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
+        } catch (e) {
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${clientMail} - ${clientNoteUrl} - ${e}`]);
+          sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
+              `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
+              `${INQUIRY_FORM}`);
+          return dispPermissionErrHtml();
+        }
+        debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
 
 
   } else if (authUserType === USER_TYPE.COACH) {
@@ -721,7 +699,7 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`);
-        return;
+        return dispAuthErrHtml();
       }
       // コーチ名簿のメールアドレスを更新 
       debugsheet.appendRow([new Date(), `メール更新対象であるコーチのメールアドレスを更新`]);
@@ -743,29 +721,20 @@ function doGet(e) {
       }
 
       // 一括で権限変更
-      clientNoteList.forEach(({ tmpEmail, noteUrl }) => {
+      for (const { tmpEmail, tmpNoteUrl } of clientNoteList) {
         try {
-          const fileId = noteUrl.match(/[-\w]{25,}/)[0];
+          const fileId = tmpNoteUrl.match(/[-\w]{25,}/)[0];
           const file = DriveApp.getFileById(fileId);
-          debugsheet.appendRow([new Date(), `クライアントノート:${noteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${tmpEmail}`]);
+          debugsheet.appendRow([new Date(), `クライアントノート:${tmpNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${tmpEmail}`]);
           allowClientNoteAccess(tmpEmail, coachMail, file);
         } catch (e) {
-          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${tmpEmail} - ${noteUrl} - ${e}`]);
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${tmpEmail} - ${tmpNoteUrl} - ${e}`]);
           sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`);
-          return HtmlService.createHtmlOutput(`
-            <html>
-              <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-                <h2>クライアントノートの権限付与失敗</h2>
-                <p style="font-size: 16px; margin-top: 20px;">
-                  この画面は閉じて、LINEに戻り、お手数ですがお問い合わせフォームから報告してください。
-                </p>
-              </body>
-            </html>`
-          );
+          return dispPermissionErrHtml();
         }
-      });
+      }
 
   } else if (authUserType === USER_TYPE.BOTH) { // クライアント、コーチ両権限
 
@@ -788,7 +757,7 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`)
-        return;
+        return dispAuthErrHtml();
       }
       
       // クライアント名簿のメールアドレスを更新
@@ -814,21 +783,30 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`)
-        return;
+        return dispAuthErrHtml();
       }
       // 取得したコーチのメールを格納
       coachMail = targetCoachData[coachMailColIndex];
 
-      // クライアントノートのファイルIDを取得
-      const match = clientNoteUrl.match(/[-\w]{25,}/);
-      if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
-      const fileId = match[0];
-      const clientNoteFile = DriveApp.getFileById(fileId);
 
-      // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
-      debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
-      allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
-      debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
+      try {
+          // クライアントノートのファイルIDを取得
+          const match = clientNoteUrl.match(/[-\w]{25,}/);
+          if (!match) throw new Error(`📛 clientNoteUrlの形式が不正: ${clientNoteUrl}`);
+          const fileId = match[0];
+          const clientNoteFile = DriveApp.getFileById(fileId);
+
+          // 更新したメールアドレスとコーチのメールアドレスでサポートノートの権限を変更する
+          debugsheet.appendRow([new Date(), `クライアントノート:${clientNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${clientMail}`]);
+          allowClientNoteAccess(clientMail, coachMail, clientNoteFile);
+        } catch (e) {
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${clientMail} - ${clientNoteUrl} - ${e}`]);
+          sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
+              `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
+              `${INQUIRY_FORM}`);
+          return dispPermissionErrHtml();
+        }
+        debugsheet.appendRow([new Date(), `クライアントノートへの権限付与完了`]);
 
 
       // コーチとしての処理
@@ -849,7 +827,7 @@ function doGet(e) {
         sendLINEMessage(authLineId, `メール認証に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`)
-        return;
+        return dispAuthErrHtml();
       }
       // コーチ名簿のメールアドレスを更新 
       debugsheet.appendRow([new Date(), `メール更新対象であるコーチのメールアドレスを更新`]);
@@ -871,29 +849,20 @@ function doGet(e) {
       }
 
       // 一括で権限変更
-      clientNoteList.forEach(({ tmpEmail, noteUrl }) => {
+      for (const { tmpEmail, tmpNoteUrl } of clientNoteList) {
         try {
-          const fileId = noteUrl.match(/[-\w]{25,}/)[0];
+          const fileId = tmpNoteUrl.match(/[-\w]{25,}/)[0];
           const file = DriveApp.getFileById(fileId);
-          debugsheet.appendRow([new Date(), `クライアントノート:${noteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${tmpEmail}`]);
+          debugsheet.appendRow([new Date(), `クライアントノート:${tmpNoteUrl}へ権限付与。コーチメール:${coachMail},クライアントメール${tmpEmail}`]);
           allowClientNoteAccess(tmpEmail, coachMail, file);
         } catch (e) {
-          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${tmpEmail} - ${noteUrl} - ${e}`]);
+          debugsheet.appendRow([new Date(), `⚠️ ノート権限変更失敗: ${tmpEmail} - ${tmpNoteUrl} - ${e}`]);
           sendLINEMessage(authLineId, `クライアントノートの権限変更に失敗しました。\n\n` +
               `お手数ですが以下のフォームよりお問い合わせ願います。\n\n` +
               `${INQUIRY_FORM}`);
-          return HtmlService.createHtmlOutput(`
-            <html>
-              <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-                <h2>クライアントノートの権限付与失敗</h2>
-                <p style="font-size: 16px; margin-top: 20px;">
-                  この画面は閉じて、LINEに戻り、お手数ですがお問い合わせフォームから報告してください。
-                </p>
-              </body>
-            </html>`
-          );
+          return dispPermissionErrHtml();
         }
-      });
+      }
   }
 
   // 変更完了メッセージ
@@ -903,13 +872,132 @@ function doGet(e) {
 
   debugsheet.appendRow([new Date(), "メールアドレス認証処理 end"]);
 
+  return dispCompHtml();
+}
+
+function dipsAlreadyAuthHtml() {
+  return HtmlService.createHtmlOutput(`<html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          background-color: #f0f8ff;
+          font-family: "Helvetica Neue", sans-serif;
+          margin: 0;
+          padding: 60px 20px;
+          text-align: center;
+        }
+        .box {
+          background: #ffffff;
+          border-radius: 14px;
+          padding: 40px 24px;
+          max-width: 90%;
+          margin: 0 auto;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          border: 1px solid #2196F3;
+        }
+        .info-icon {
+          font-size: 64px;
+          color: #2196F3;
+          margin-bottom: 16px;
+        }
+        h2 {
+          font-size: 22px;
+          margin-bottom: 10px;
+          color: #1976D2;
+        }
+        p {
+          font-size: 16px;
+          color: #333;
+          margin: 8px 0;
+        }
+        .alert {
+          font-size: 15px;
+          color: #1976D2;
+          font-weight: bold;
+          margin-top: 24px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="info-icon">ℹ️</div>
+        <h2>メールアドレス認証は完了しています</h2>
+        <p>このメールアドレスはすでに認証されています。</p>
+        <p>LINEの案内に沿って、次のステップへお進みください。</p>
+        <p class="alert">この画面は必ず「×」ボタンを手動で閉じてください。</p>
+      </div>
+    </body>
+  </html>`);
+}
+
+// メール認証再度
+function dispAgainAuthHtml() {
+  return HtmlService.createHtmlOutput(`
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          background-color: #fdf2f2;
+          font-family: "Helvetica Neue", sans-serif;
+          margin: 0;
+          padding: 60px 20px;
+          text-align: center;
+        }
+        .box {
+          background: #ffffff;
+          border-radius: 14px;
+          padding: 40px 24px;
+          max-width: 90%;
+          margin: 0 auto;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+          border: 1px solid #f44336;
+        }
+        .error-icon {
+          font-size: 64px;
+          color: #f44336;
+          margin-bottom: 16px;
+        }
+        h2 {
+          font-size: 22px;
+          margin-bottom: 10px;
+          color: #d32f2f;
+        }
+        p {
+          font-size: 16px;
+          color: #333;
+          margin: 8px 0;
+        }
+        .alert {
+          font-size: 15px;
+          color: #d32f2f;
+          font-weight: bold;
+          margin-top: 24px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="error-icon">❌</div>
+        <h2>メールアドレス認証に失敗しました</h2>
+        <p>LINEに戻り、再度メール認証フォームから認証をやり直してください。</p>
+        <p class="alert">この画面は必ず「×」ボタンで手動で閉じてください。</p>
+        <p class="alert">※閉じないと正しく再認証ができません。</p>
+      </div>
+    </body>
+  </html>`);
+}
+
+// メール認証失敗画面表示
+function dispAuthErrHtml() {
   return HtmlService.createHtmlOutput(`
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           body {
-            background-color: #f5f5f5;
+            background-color: #fdf2f2;
             font-family: "Helvetica Neue", sans-serif;
             margin: 0;
             padding: 60px 20px;
@@ -922,43 +1010,159 @@ function doGet(e) {
             max-width: 90%;
             margin: 0 auto;
             box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            border: 1px solid #f44336;
           }
-          .checkmark {
+          .error-icon {
             font-size: 64px;
-            color: #4CAF50;
+            color: #f44336;
             margin-bottom: 16px;
           }
           h2 {
             font-size: 22px;
             margin-bottom: 10px;
-            color: #333;
+            color: #d32f2f;
           }
           p {
             font-size: 16px;
             color: #333;
-            margin: 0;
+            margin: 8px 0;
           }
-          .close-msg {
-            font-size: 13px;
-            margin-top: 12px;
-            color: #aaa;
+          .alert {
+            font-size: 15px;
+            color: #d32f2f;
+            font-weight: bold;
+            margin-top: 24px;
           }
         </style>
-        <script>
-        // 3秒後にウィンドウを閉じる
-        setTimeout(() => {
-          window.close();
-        }, 3000);
-      </script>
       </head>
       <body>
         <div class="box">
-          <div class="checkmark">✅</div>
-          <h2>認証が完了しました</h2>
-          <p>この画面は3秒後に自動で閉じます。</p>
-          <p>閉じない場合は手動で閉じてください。</p>
+          <div class="error-icon">❌</div>
+          <h2>メール認証に失敗しました</h2>
+          <p>この画面は閉じて、LINEに戻ってください。</p>
+          <p>お手数ですが、<strong>LINE内のメッセージから</strong><br>お問い合わせフォームにてご連絡ください。</p>
+          <p class="alert">この画面は必ず「×」ボタンで手動で閉じてください。</p>
+          <p class="alert">※閉じないと、認証処理が繰り返される可能性があります。</p>
         </div>
       </body>
-    </html>
-  `);
+    </html>`);
+}
+
+// 権限付与エラー画面表示
+function dispPermissionErrHtml() {
+  return HtmlService.createHtmlOutput(`
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              background-color: #fdf2f2;
+              font-family: "Helvetica Neue", sans-serif;
+              margin: 0;
+              padding: 60px 20px;
+              text-align: center;
+            }
+            .box {
+              background: #ffffff;
+              border-radius: 14px;
+              padding: 40px 24px;
+              max-width: 90%;
+              margin: 0 auto;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+              border: 1px solid #f44336;
+            }
+            .error-icon {
+              font-size: 64px;
+              color: #f44336;
+              margin-bottom: 16px;
+            }
+            h2 {
+              font-size: 22px;
+              margin-bottom: 10px;
+              color: #d32f2f;
+            }
+            p {
+              font-size: 16px;
+              color: #333;
+              margin: 8px 0;
+            }
+            .alert {
+              font-size: 15px;
+              color: #d32f2f;
+              font-weight: bold;
+              margin-top: 24px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <div class="error-icon">❌</div>
+            <h2>クライアントノートの権限付与に失敗しました</h2>
+            <p>この画面は閉じて、LINEに戻ってください。</p>
+            <p>お手数ですが、<strong>LINE内のメッセージから</strong><br>お問い合わせフォームにてご連絡ください。</p>
+            <p class="alert">この画面は必ず「×」ボタンで手動で閉じてください。</p>
+            <p class="alert">※閉じずに放置すると、認証処理が繰り返される恐れがあります。</p>
+          </div>
+        </body>
+      </html>`
+    );
+}
+
+// メールアドレス完了画面表示
+function dispCompHtml() {
+  return HtmlService.createHtmlOutput(`
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          background-color: #f5f5f5;
+          font-family: "Helvetica Neue", sans-serif;
+          margin: 0;
+          padding: 60px 20px;
+          text-align: center;
+        }
+        .box {
+          background: #ffffff;
+          border-radius: 14px;
+          padding: 40px 24px;
+          max-width: 90%;
+          margin: 0 auto;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .checkmark {
+          font-size: 64px;
+          color: #4CAF50;
+          margin-bottom: 16px;
+        }
+        h2 {
+          font-size: 22px;
+          margin-bottom: 10px;
+          color: #333;
+        }
+        p {
+          font-size: 16px;
+          color: #333;
+          margin: 8px 0;
+        }
+        .alert {
+          font-size: 15px;
+          color: #d32f2f;
+          font-weight: bold;
+          margin-top: 24px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="checkmark">✅</div>
+        <h2>認証が完了しました</h2>
+        <p>LINEに登録案内をお送りしました。</p>
+        <p>この画面は自動で閉じません。</p>
+        <p class="alert">この画面は必ず「×」ボタンで手動で閉じてください。</p>
+        <p>閉じずに残したままだと、再度認証処理が動く可能性があります。</p>
+      </div>
+    </body>
+  </html>
+`);
 }
